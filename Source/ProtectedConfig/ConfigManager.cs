@@ -78,7 +78,7 @@ namespace ProtectedConfig
             catch (Exception error)
             {
                 throw new ConfigException(
-                    "The config data could not be deserialized!", error);
+                    "The config data could not be loaded!", error);
             }
         }
 
@@ -131,7 +131,7 @@ namespace ProtectedConfig
             catch (Exception error)
             {
                 throw new ConfigException(
-                    "The config data could not be serialized!", error);
+                    "The config data could not be saved!", error);
             }
         }
 

@@ -44,6 +44,18 @@ namespace UnitTests
             }
         }
 
+        [TestMethod]
+        public void LastSetWins()
+        {
+            const string NEWCODE = "XYZ987";
+
+            var cm = new ConfigManager()
+                .Set("CODE", "ABC123")
+                .Set("CODE", NEWCODE);
+
+            Assert.AreEqual(cm.Get<string>(CODE), NEWCODE);
+        }
+
         [DataTestMethod]
         [ExpectedException(typeof(ConfigException))]
         [DataRow(" a")]
