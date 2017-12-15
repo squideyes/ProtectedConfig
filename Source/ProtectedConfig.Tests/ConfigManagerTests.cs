@@ -29,12 +29,11 @@ namespace UnitTests
         [TestMethod]
         public void NullCanBeSetAndRetrieved()
         {
-            var source = new ConfigManager()
-                .Set<string>("CODE", null);
-
             using (var stream = new MemoryStream())
             {
-                source.Save(stream);
+                var source = new ConfigManager()
+                    .Set<string>("CODE", null)
+                    .Save(stream);
 
                 stream.Position = 0;
 
@@ -110,12 +109,11 @@ namespace UnitTests
         [TestMethod]
         public void LoadToStreamReturnsSelf()
         {
-            var source = new ConfigManager()
-                .Set(CODE, "ABC123");
-
             using (var stream = new MemoryStream())
             {
-                source.Save(stream);
+                var source = new ConfigManager()
+                    .Set(CODE, "ABC123")
+                    .Save(stream);
 
                 stream.Position = 0;
 
@@ -128,25 +126,23 @@ namespace UnitTests
         [TestMethod]
         public void SaveThenLoadRoundtrips()
         {
-            var source = new ConfigManager()
-                .Set(CODE, "ABC123");
-
             using (var stream = new MemoryStream())
             {
-                source.Save(stream);
+                var source = new ConfigManager()
+                    .Set(CODE, "ABC123")
+                    .Save(stream);
 
                 stream.Position = 0;
 
-                var target = new ConfigManager();
-
-                target.Load(stream);
+                var target = new ConfigManager()
+                    .Load(stream);
 
                 Assert.AreEqual(source.Get<string>(CODE), target.Get<string>(CODE));
             }
         }
 
         [DataTestMethod]
-        [DataRow("Password", "qwerty")]
+        [DataRow("Password", "ABC123")]
         [DataRow("Guid", "H3I46109-B317-4FFD-8CA4-98E8975D6771")]
         [DataRow("ConnString", "Server=server;Database=db;Uid=uid;Pwd=pwd;")]
         private void GetEqualsSet(string key, object value)
@@ -173,6 +169,60 @@ namespace UnitTests
             new ConfigManager()
                 .Set(CODE, "ABC123")
                 .Save((Stream)null);
+        }
+
+        [TestMethod]
+        public void GetIgnoresKeyCase()
+        {
+            const string VALUE = "ABC123";
+
+            var result = new ConfigManager()
+                .Set("CODE", VALUE)
+                .Get<string>("cOdE");
+
+            Assert.AreEqual(result, VALUE);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ConfigException))]
+        public void SaveWithEntropyThenLoadWithoutFails()
+        {
+            var entropy = new byte[] { 1, 2, 3, 4, 5 };
+
+            using (var stream = new MemoryStream())
+            {
+                var source = new ConfigManager()
+                    .WithEntropy(entropy)
+                    .Set(CODE, "ABC123")
+                    .Save(stream);
+
+                stream.Position = 0;
+
+                var target = new ConfigManager()
+                    .Load(stream);
+            }
+        }
+
+        [TestMethod]
+        public void SaveAndLoadWithEntropyWorks()
+        {
+            var entropy = new byte[] { 1, 2, 3, 4, 5 };
+
+            using (var stream = new MemoryStream())
+            {
+                var source = new ConfigManager()
+                    .WithEntropy(entropy)
+                    .Set(CODE, "ABC123")
+                    .Save(stream);
+
+                stream.Position = 0;
+
+                var target = new ConfigManager()
+                    .WithEntropy(entropy)
+                    .Load(stream);
+
+                Assert.AreEqual(source.Get<string>(CODE), target.Get<string>(CODE));
+            }
         }
     }
 }

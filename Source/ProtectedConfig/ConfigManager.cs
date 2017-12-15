@@ -155,7 +155,7 @@ namespace ProtectedConfig
 
         public ConfigManager WithEntropy(byte[] value)
         {
-            if (value != null || value.Length == 0)
+            if (value != null && value.Length == 0)
                 value = null;
 
             entropy = value;
