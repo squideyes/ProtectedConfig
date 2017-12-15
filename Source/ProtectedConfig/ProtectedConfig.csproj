@@ -5,7 +5,7 @@
     <Authors>Louis S. Berman</Authors>
     <Company>SquidEyes, LLC.</Company>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Description>Configuration manager powered by Windows Data Protection API.</Description>
+    <Description>Super-easy DPAPI-based encrypted configuration helper</Description>
     <PackageLicenseUrl>http://www.gnu.org/licenses/</PackageLicenseUrl>
     <Copyright>Copyright 2017 SquidEyes, LLC.</Copyright>
     <PackageTags>.NET Configuration Security DPAPI Encryption</PackageTags>
