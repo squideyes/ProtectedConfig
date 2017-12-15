@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Louis S. Berman</Authors>
+    <Company>SquidEyes, LLC.</Company>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Description>Configuration manager powered by Windows Data Protection API.</Description>
+    <PackageLicenseUrl>http://www.gnu.org/licenses/</PackageLicenseUrl>
+    <Copyright>Copyright 2017 SquidEyes, LLC.</Copyright>
+    <PackageTags>.NET Configuration Security DPAPI Encryption</PackageTags>
+    <PackageProjectUrl>https://github.com/squideyes/ProtectedConfig</PackageProjectUrl>
+    <NeutralLanguage></NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\App.licenseheader" Link="App.licenseheader" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.4.0" />
+  </ItemGroup>
+
+</Project>
