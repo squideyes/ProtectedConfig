@@ -20,7 +20,7 @@ using System.IO;
 
 namespace ProtectedConfig
 {
-    public static class MiscExtenders
+    internal static class MiscExtenders
     {
         public static bool IsKey(this string value)
         {
@@ -58,6 +58,9 @@ namespace ProtectedConfig
             try
             {
                 var fileInfo = new FileInfo(value);
+
+                if (string.IsNullOrWhiteSpace(fileInfo.Extension))
+                    return false;
 
                 if (!mustBeRooted)
                     return true;
