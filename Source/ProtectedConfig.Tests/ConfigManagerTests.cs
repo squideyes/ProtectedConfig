@@ -17,7 +17,11 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProtectedConfig;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions.TestingHelpers;
+using System.Security.Cryptography;
 
 namespace UnitTests
 {
@@ -136,7 +140,7 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void SaveThenLoadRoundtrips()
+        public void SaveThenLoadRoundtripsThroughStream()
         {
             using (var stream = new MemoryStream())
             {
@@ -153,6 +157,32 @@ namespace UnitTests
             }
         }
 
+        [TestMethod]
+        public void RoundtripThroughMockedFileSystem()
+        {
+            byte[] GetBytes()
+            {
+                using (var stream = new MemoryStream())
+                {
+                    var source = new ConfigManager()
+                        .Set(CODE, "ABC123")
+                        .Save(stream);
+
+                    return stream.ToArray();
+                }
+            }
+
+            const string FILENAME = @"C:\Settings.json";
+
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                { FILENAME, new MockFileData(GetBytes()) }
+            });
+
+            var target = new ConfigManager(fileSystem)
+                .Load(FILENAME);
+        }
+
         [DataTestMethod]
         [DataRow("Password", "ABC123")]
         [DataRow("Guid", "H3I46109-B317-4FFD-8CA4-98E8975D6771")]
@@ -167,7 +197,7 @@ namespace UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ConfigException))]
+        [ExpectedException(typeof(ArgumentNullException))]
         public void NullStreamThrowsErrorOnLoad()
         {
             new ConfigManager()
@@ -175,7 +205,7 @@ namespace UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ConfigException))]
+        [ExpectedException(typeof(ArgumentNullException))]
         public void NullStreamThrowsErrorOnSave()
         {
             new ConfigManager()
@@ -196,7 +226,7 @@ namespace UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ConfigException))]
+        [ExpectedException(typeof(CryptographicException))]
         public void SaveWithEntropyThenLoadWithoutFails()
         {
             var entropy = new byte[] { 1, 2, 3, 4, 5 };
@@ -211,6 +241,26 @@ namespace UnitTests
                 stream.Position = 0;
 
                 var target = new ConfigManager()
+                    .Load(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CryptographicException))]
+        public void SaveWithoutEntropyThenLoadWithFails()
+        {
+            var entropy = new byte[] { 1, 2, 3, 4, 5 };
+
+            using (var stream = new MemoryStream())
+            {
+                var source = new ConfigManager()
+                    .Set(CODE, "ABC123")
+                    .Save(stream);
+
+                stream.Position = 0;
+
+                var target = new ConfigManager()
+                    .WithEntropy(entropy)
                     .Load(stream);
             }
         }

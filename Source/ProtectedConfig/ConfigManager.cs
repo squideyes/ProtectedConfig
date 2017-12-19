@@ -15,11 +15,13 @@
 // You should have received a copy of the GNU General Public License
 // along with ProtectedConfig.  If not, see <http://www.gnu.org/licenses/>.
 
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.IO.Abstractions;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace ProtectedConfig
 {
@@ -28,6 +30,25 @@ namespace ProtectedConfig
         private Dictionary<string, object> keyValues = new Dictionary<string, object>();
         private DataProtectionScope scope = DataProtectionScope.LocalMachine;
         private byte[] entropy = null;
+
+        private readonly IFileSystem fileSystem;
+
+        public ConfigManager(IFileSystem fileSystem)
+        {
+            this.fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        }
+
+        public ConfigManager()
+            : this(new FileSystem())
+        {
+        }
+
+        public ConfigManager WithEntropy(byte[] entropy)
+        {
+            this.entropy = entropy;
+
+            return this;
+        }
 
         public ConfigManager WithCurrentUserScope()
         {
@@ -56,117 +77,93 @@ namespace ProtectedConfig
             return keyValues.ContainsKey(key) ? (T)keyValues[key] : default(T);
         }
 
-        public ConfigManager Load(Stream stream)
+        private Exception GetConfigFileError(string fileName, string verb, Exception error) =>
+            new ConfigException($"The \"{fileName}\" configuration file cannot be {verb}!", error);
+
+        public ConfigManager Save(string fileName)
         {
-            if (stream == null)
-                throw new ConfigException("The \"stream\" parameter is null.");
-
-            try
-            {
-                var reader = new BinaryReader(stream);
-
-                var bytes = ProtectedData.Unprotect(
-                    reader.ReadToEnd(), entropy, scope);
-
-                var formatter = new BinaryFormatter();
-
-                using (var ms = new MemoryStream(bytes))
-                    keyValues = (Dictionary<string, object>)formatter.Deserialize(ms);
-
-                return this;
-            }
-            catch (Exception error)
-            {
-                throw new ConfigException(
-                    "The config data could not be loaded!", error);
-            }
-        }
-
-        public ConfigManager Load(string fileName)
-        {
-            if (!fileName.IsFileName())
+            if (!fileName.IsFileName(false))
                 throw new ConfigException($"The \"{fileName}\" filename is invalid!");
 
-            if (!File.Exists(fileName))
-                return this;
-
             try
             {
-                var bytes = ProtectedData.Unprotect(
-                    File.ReadAllBytes(fileName), entropy, scope);
-
-                using (var stream = new MemoryStream(bytes))
-                    return Load(stream);
+                using (var stream = fileSystem.File.OpenWrite(fileName))
+                    return Save(stream);
             }
             catch (Exception error)
             {
-                throw GetConfigError(fileName, "loaded", error);
+                throw GetConfigFileError(fileName, "saved", error);
             }
         }
 
         public ConfigManager Save(Stream stream)
         {
             if (stream == null)
-                throw new ConfigException("The \"stream\" parameter is null.");
+                throw new ArgumentNullException(nameof(stream));
 
-            if (keyValues.Count == 0)
-                return this;
+            if (!stream.CanWrite)
+                throw new Exception("The stream does not support writing!");
 
-            try
-            {
-                var formatter = new BinaryFormatter();
+            var bytes = Encoding.ASCII.GetBytes(
+                JsonConvert.SerializeObject(keyValues, Formatting.None));
 
-                using (var ms = new MemoryStream())
-                {
-                    formatter.Serialize(ms, keyValues);
-
-                    var data = ProtectedData.Protect(
-                        ms.ToArray(), entropy, scope);
-
-                    stream.Write(data, 0, data.Length);
-                }
-
-                return this;
-            }
-            catch (Exception error)
-            {
-                throw new ConfigException(
-                    "The config data could not be saved!", error);
-            }
-        }
-
-        public ConfigManager Save(string fileName)
-        {
-            if (!fileName.IsFileName())
-                throw new ConfigException($"The \"{fileName}\" filename is invalid!");
-
-            try
-            {
-                using (var stream = File.OpenWrite(fileName))
-                    Save(stream);
-
-                return this;
-            }
-            catch (Exception error)
-            {
-                throw GetConfigError(fileName, "saved", error);
-            }
-        }
-
-        public ConfigManager WithEntropy(byte[] value)
-        {
-            if (value != null && value.Length == 0)
-                value = null;
-
-            entropy = value;
+            EncryptToStream(bytes, stream);
 
             return this;
         }
 
-        private Exception GetConfigError(string fileName, string verb, Exception error)
+        public ConfigManager Load(string fileName)
         {
-            return new ConfigException(
-                $"The \"{fileName}\" configuration file cannot be {verb}!", error);
+            if (!fileName.IsFileName(false))
+                throw new ConfigException($"The \"{fileName}\" filename is invalid!");
+
+            try
+            {
+                using (var stream = fileSystem.File.OpenRead(fileName))
+                    return Load(stream);
+            }
+            catch (Exception error)
+            {
+                throw GetConfigFileError(fileName, "loaded", error);
+            }
+        }
+
+        public ConfigManager Load(Stream stream)
+        {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
+            if (!stream.CanRead)
+                throw new Exception("The stream does not support reading!");
+
+            var json = Encoding.ASCII.GetString(DecryptFromStream(stream));
+
+            keyValues = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+
+            return this;
+        }
+
+        private void EncryptToStream(byte[] bytes, Stream stream)
+        {
+            int length = 0;
+
+            var data = ProtectedData.Protect(bytes, entropy, scope);
+
+            if (stream.CanWrite && data != null)
+            {
+                stream.Write(data, 0, data.Length);
+
+                length = data.Length;
+            }
+        }
+
+        private byte[] DecryptFromStream(Stream stream)
+        {
+            var reader = new BinaryReader(stream);
+
+            var input = reader.ReadToEnd();
+
+            return ProtectedData.Unprotect(input, entropy, scope);
         }
     }
 }

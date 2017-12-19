@@ -11,7 +11,9 @@
     <PackageTags>.NET Configuration Security DPAPI Encryption</PackageTags>
     <PackageProjectUrl>https://github.com/squideyes/ProtectedConfig</PackageProjectUrl>
     <NeutralLanguage></NeutralLanguage>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
+    <PackageReleaseNotes>- Changed serialization scheme to leverage JSON.net since BinaryFormatter didn't work with some data
+- Added IFileSystem injection via System.IO.Abstractions assembly to enhance unit testing</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="System.IO.Abstractions" Version="2.1.0.176" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.4.0" />
   </ItemGroup>
 
