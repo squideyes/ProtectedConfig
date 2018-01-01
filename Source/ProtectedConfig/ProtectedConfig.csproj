@@ -8,11 +8,15 @@
     <Description>Super-easy DPAPI-based encrypted configuration helper</Description>
     <PackageLicenseUrl>http://www.gnu.org/licenses/</PackageLicenseUrl>
     <Copyright>Copyright 2017 SquidEyes, LLC.</Copyright>
-    <PackageTags>.NET Configuration Security DPAPI Encryption</PackageTags>
+    <PackageTags>.NET Config Configuration Settings Security DPAPI Encryption Decryption App.config</PackageTags>
     <PackageProjectUrl>https://github.com/squideyes/ProtectedConfig</PackageProjectUrl>
     <NeutralLanguage></NeutralLanguage>
-    <Version>1.1.0</Version>
-    <PackageReleaseNotes>- Changed serialization scheme to leverage JSON.net since BinaryFormatter didn't work with some data
+    <Version>1.1.1</Version>
+    <PackageReleaseNotes>v1.1.1
+- Minor update to README.md and package properties
+
+v1.1.0
+- Changed serialization scheme to leverage JSON.net since BinaryFormatter didn't work with some data
 - Added IFileSystem injection via System.IO.Abstractions assembly to enhance unit testing</PackageReleaseNotes>
   </PropertyGroup>
 

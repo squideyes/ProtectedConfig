@@ -1,21 +1,25 @@
 The ProtectedConfig NuGet makes it super easy to work with DPAPI-protected data using a fluent interface.  It only takes a few lines of code to get started:
 ```csharp
-var configManager = new ConfigManager()
-    .Set("CODE", "ABC123")
+new ConfigManager()
     .Set("EMAIL", "somedude@someco.com")
     .Set("ID", 12345)
-    .Set("INFO", new MySerializableClass())
+	.Set("ISACTIVE", true)
+    .Set("INFO", new MyInfo())
     .Save(@"C:\MyApp\Settings\Config.json);
 ```
 ```csharp
-var email = new ConfigManager()
-    .Load(@"C:\MyApp\Settings\Config.json")
-    .Get<string>("EMAIL");
+var cm = new ConfigManager()
+    .Load(@"C:\MyApp\Settings\Config.json");
+
+var email = cm.Get<string>("EMAIL");
+var id = cm.Get<int>("ID");
+var isActive = cm.Get<bool>("ISACTIVE");
+var info  = cm.Get<MyClass>("INFO");
 ```
 | Value | Notes |
 | ----- | ----- |
 | WithCurrentUserScope() | Associates the protected config data with the current user. Only threads running under the current user can protect or unprotect the data.  NOTE: if ommitted the scope will default to "LocalMachine" allowing *any* process running on the computer to protect or unprotect the data. |
-| Set&lt;T&gt;(string key, T value) | Associates a value with a given key.  Any value may be supplied as long as it can be serialized using BinaryFormatter, including null.  Keys are case-insensitive. |
+| Set&lt;T&gt;(string key, T value) | Associates a value with a given key.  Any value may be supplied as long as it can be serialized using Newtonsoft's Json.NET, including null.  Keys are case-insensitive. |
 | Get&lt;T&gt;(string key) | Retrieves a previously-saved value associated with a given key then deserializes the value into a generic type T.  Keys are case-insensitive. |
 | Load(Stream stream) | Loads a previously saved  DPAPI-encrypted config data stream using the current  scope and reading from the current stream position all the way  to the end.  NOTE: if a stream cannot be loaded then  subsequent Get&lt;T&gt;(string key) operations will return default values. |
 | Load(string fileName) | Loads a previously saved  DPAPI-encrypted config data file  using the current scope.  NOTE: if a stream cannot be loaded then  subsequent Get&lt;T&gt;(string key) operations will return default values.  |
